@@ -6,7 +6,7 @@ import json
 pygame.init()
 
 # Set up the game window
-window_size = (1200, 768)
+window_size = (1800, 1000)
 window = pygame.display.set_mode(window_size)
 pygame.display.set_caption('Game with Region Data')
 
@@ -27,13 +27,14 @@ class Region:
         self.owner = owner  # Current owner of the region
         self.resources = resources  # Resources produced by the region
         self.mask = None  # The mask for detecting mouseover; will be assigned later
-        self.tpno = None
-        self.units = None
+        self.tpno = None # Number of Trade Posts
+        self.units = None # Number of Units, assigned randomly at start of game
 
     def display_info(self):
         """Returns a string with information about the region."""
         return f"Region: {self.name}, Owner: {self.owner}, Resources: {self.resources}, TP #: {self.tpno}, Units: {self.units}"
 
+#Define a variable to hold information about the selected region
 selected_region_info = None
 
 # Get the size of the image
@@ -90,10 +91,11 @@ for color_key_str, data in resource_data.items():
         region.units = data.get("units", region.units)
 
 # Set up font for text box
-font = pygame.font.Font(None, 36)
+font = pygame.font.Font(None, 18)
 
 # Game loop
 while True:
+    window.fill((0,0,0))
     # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -101,13 +103,12 @@ while True:
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
+            #Checking that mouse is in-bounds for mask layer
             if mouse_pos[0] < game_map_image.get_width() and mouse_pos[1] < game_map_image.get_height():
                 for region in regions.values():
                     if region.mask.get_at((mouse_pos[0],mouse_pos[1])):
                         #Mouse is over the region
                         selected_region_info = region.display_info()
-                        print(selected_region_info)
-
 
     # Get mouse position
     mouse_pos = pygame.mouse.get_pos()
@@ -126,10 +127,6 @@ while True:
                 region_info = region.display_info()
                 break  # Stop checking after finding the matching region
 
-
-
-
-
     # Draw the actual game map
     window.blit(game_map_image, (0, 0))
 
@@ -138,5 +135,9 @@ while True:
         text_surface = font.render(region_info, True, (255, 255, 255))
         window.blit(text_surface, (20, 20))
 
+    if selected_region_info:
+        rendered_text = font.render(selected_region_info, True, (255, 255, 255))
+        window.blit(rendered_text, (1025,50))
+
     # Update the display
-    pygame.display.update()
+    pygame.display.update() 
