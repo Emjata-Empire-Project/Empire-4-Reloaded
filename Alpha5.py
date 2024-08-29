@@ -8,8 +8,7 @@ pygame.init()
 # Set up the game window
 window_size = (1800, 1000)
 window = pygame.display.set_mode(window_size)
-pygame.display.set_caption('Game with Region Data')
-
+pygame.display.set_caption('Empire4 Reloaded')
 # Load the main image with multiple colored regions (used for detection)
 colored_regions_image = pygame.image.load('assets/Emjata2.png').convert()
 
@@ -30,18 +29,21 @@ class Region:
         self.tpno = None # Number of Trade Posts
         self.units = None # Number of Units, assigned randomly at start of game
         self.highlight_surface = None #Cached highlight surface
-        self.position = (-5,0)
+        self.position = (-7,0) #Account for slight drift between mask layer and map layer
 
     def display_info(self):
         """Returns a string with information about the region."""
         return f"Region: {self.name}, Owner: {self.owner}, Resources: {self.resources}, TP #: {self.tpno}, Units: {self.units}"
 
-    def create_highlight_surface(self, highlight_color=(255,0,0,128)):
+    def create_highlight_surface(self, players_dict, default_color=(255,0,0,128)):
+        #Find player's color by owner name
+        owner_color = players_dict.get(self.owner).color if self.owner in players_dict else default_color
+
         #Create a transparent surface with the size of the mask
         highlight_surface = pygame.Surface(self.mask.get_size(), pygame.SRCALPHA)
         highlight_surface.fill((0,0,0,0))
 
-        mask_surface = self.mask.to_surface(setcolor=highlight_color, unsetcolor=(0,0,0,0))
+        mask_surface = self.mask.to_surface(setcolor=owner_color, unsetcolor=(0,0,0,0))
 
         self.highlight_surface = mask_surface
 
@@ -50,13 +52,19 @@ class Region:
         if self.highlight_surface:
             window.blit(self.highlight_surface, self.position)
 
-#class Player:
-    #Color
-    #Required Resource
-    #OwnedRes
-    #Techs
-    #Units
-    #
+class Player:
+    def __init__(self, name, color):
+        self.color = color
+        self.name = name
+        #self.Required Resource = ReqRes
+        #self.OwnedRes = None
+        #self.Techs = None
+        #self.Units = None
+    
+players = {
+    "Player1": Player("Player1", (0, 255, 0, 128)),  # Green color
+    "Player2": Player("Player2", (0, 0, 255, 128)),  # Blue color
+}
 
 
 #Define a variable to hold information about the selected region
@@ -121,7 +129,7 @@ font = pygame.font.Font(None, 18)
 #Create a mask for each region that isn't neutral
 for region in regions.values():
     if region.owner != "":
-        region.create_highlight_surface()
+        region.create_highlight_surface(players)
 
 # Game loop
 while True:
