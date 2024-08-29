@@ -11,14 +11,14 @@ window = pygame.display.set_mode(window_size)
 pygame.display.set_caption('Game with Region Data')
 
 # Load the main image with multiple colored regions (used for detection)
-colored_regions_image = pygame.image.load('Emjata2.png').convert()
+colored_regions_image = pygame.image.load('assets/Emjata2.png').convert()
 
 # Load the actual game map image (visible to the player)
-game_map_image = pygame.image.load('Emjata.png').convert()
+game_map_image = pygame.image.load('assets/Emjata.png').convert()
 
 # Load resource data from JSON file
-with open('resources.json') as f:
-    resource_data = json.load(f)
+with open('data/regions.json') as f:
+    region_data = json.load(f)
 
 class Region:
     def __init__(self, color, name, owner, resources, tpno, units):
@@ -29,10 +29,35 @@ class Region:
         self.mask = None  # The mask for detecting mouseover; will be assigned later
         self.tpno = None # Number of Trade Posts
         self.units = None # Number of Units, assigned randomly at start of game
+        self.highlight_surface = None #Cached highlight surface
+        self.position = (-5,0)
 
     def display_info(self):
         """Returns a string with information about the region."""
         return f"Region: {self.name}, Owner: {self.owner}, Resources: {self.resources}, TP #: {self.tpno}, Units: {self.units}"
+
+    def create_highlight_surface(self, highlight_color=(255,0,0,128)):
+        #Create a transparent surface with the size of the mask
+        highlight_surface = pygame.Surface(self.mask.get_size(), pygame.SRCALPHA)
+        highlight_surface.fill((0,0,0,0))
+
+        mask_surface = self.mask.to_surface(setcolor=highlight_color, unsetcolor=(0,0,0,0))
+
+        self.highlight_surface = mask_surface
+
+    def draw(self, window):
+        # Draw the highlight if it exists
+        if self.highlight_surface:
+            window.blit(self.highlight_surface, self.position)
+
+#class Player:
+    #Color
+    #Required Resource
+    #OwnedRes
+    #Techs
+    #Units
+    #
+
 
 #Define a variable to hold information about the selected region
 selected_region_info = None
@@ -80,7 +105,7 @@ for x in range(image_width):
         regions[color_key].mask.set_at((x, y))
 
 # Assign resources to regions based on the resource data
-for color_key_str, data in resource_data.items():
+for color_key_str, data in region_data.items():
     color_key = tuple(map(int, color_key_str.strip("()").split(", ")))
     if color_key in regions:
         region = regions[color_key]
@@ -92,6 +117,11 @@ for color_key_str, data in resource_data.items():
 
 # Set up font for text box
 font = pygame.font.Font(None, 18)
+
+#Create a mask for each region that isn't neutral
+for region in regions.values():
+    if region.owner != "":
+        region.create_highlight_surface()
 
 # Game loop
 while True:
@@ -138,6 +168,10 @@ while True:
     if selected_region_info:
         rendered_text = font.render(selected_region_info, True, (255, 255, 255))
         window.blit(rendered_text, (1025,50))
+
+    for region in regions.values():
+        region.draw(window)
+
 
     # Update the display
     pygame.display.update() 
